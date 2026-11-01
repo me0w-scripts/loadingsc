@@ -1,0 +1,701 @@
+--[[
+    Steal a Brainrot Grave Hunt AUTO PIECE GIVER  -  Halloween loading screen
+    - 2 minute loading screen (1% -> 100%), then it fades out
+    - Your 8 pictures change in the middle after a random 0.5 - 1.5 seconds
+      (pop, ring pulse, color flash, confetti on every change)
+    - Built to work on ANY executor (Solara, phone executors, etc.):
+      plain Frames only (no CanvasGroup), safe fallbacks for gethui / CoreGui /
+      PlayerGui and for the screen size, fade done with a black cover frame
+    - Scales to any screen: PC, tablet, phone (portrait + landscape)
+    - Put your main script at the bottom where marked.
+]]
+
+local TITLE = "Grave Hunt Piece Giver Loading Screen"
+local TOTAL_TIME = 120 -- 2 minutes
+
+-- Optional: your own uploaded pictures, e.g. { "rbxassetid://123", "rbxassetid://456" }
+-- Leave empty to use the built-in pixel-art versions of the 8 pictures.
+local IMAGE_IDS = {}
+
+local CARD_W, CARD_H = 320, 404
+local CELL = 3
+
+local ORANGE = Color3.fromRGB(255, 122, 24)
+local ORANGE_LIGHT = Color3.fromRGB(255, 176, 60)
+local ORANGE_DARK = Color3.fromRGB(150, 60, 8)
+local PURPLE = Color3.fromRGB(170, 80, 255)
+local GREEN = Color3.fromRGB(130, 255, 70)
+local YELLOW = Color3.fromRGB(255, 196, 60)
+local DARK = Color3.fromRGB(18, 8, 24)
+local TEXT = Color3.fromRGB(255, 244, 224)
+local MUTED = Color3.fromRGB(204, 176, 232)
+local INNER = Color3.fromRGB(58, 32, 92)
+local TOP = Color3.fromRGB(26, 10, 40)
+local BOTTOM = Color3.fromRGB(70, 22, 64)
+
+local PICS = {
+	"26,25|FBF3F2,FAEEEC,FAEAEA,F7E7E7,F5E1E1,ECD9DB,DCC9BC,D6AAA2,AA9EA1,B97889,867776,A044B0,674969,473E41|0,12,1,13;0,13,1,12;0,14,1,13;1,11,2,13;1,13,1,12;1,14,2,13;2,10,2,13;2,12,3,12;2,15,2,13;3,10,1,13;3,11,1,10;3,12,2,7;3,14,1,9;3,15,2,13;4,9,2,11;4,11,1,7;4,12,2,11;4,14,1,7;4,15,2,11;5,9,2,12;5,11,4,10;5,15,2,11;5,17,1,12;6,6,1,13;6,7,12,12;6,19,2,13;7,6,2,13;7,8,3,8;7,11,2,10;7,13,1,8;7,14,2,10;7,16,2,8;7,18,1,10;7,19,2,13;8,8,1,5;8,9,1,0;8,10,1,8;8,11,1,12;8,12,1,10;8,13,1,8;8,14,1,12;8,15,1,8;8,16,1,6;8,17,1,4;8,18,1,6;9,8,1,3;9,9,1,0;9,10,1,8;9,11,2,12;9,13,1,8;9,14,1,12;9,15,1,10;9,16,1,6;9,17,1,0;9,18,1,5;10,8,1,3;10,9,1,6;10,10,1,8;10,11,2,6;10,13,1,5;10,14,1,6;10,15,1,7;10,16,1,8;10,17,1,0;10,18,1,5;11,2,1,11;11,3,1,6;11,4,1,11;11,8,1,4;11,9,1,6;11,10,1,13;11,11,1,8;11,12,3,6;11,15,2,10;11,17,1,0;11,18,1,5;11,21,1,11;11,22,1,6;11,23,1,11;12,1,3,11;12,4,1,6;12,5,1,8;12,8,2,5;12,10,1,12;12,11,1,13;12,12,1,10;12,13,1,9;12,14,2,13;12,16,1,6;12,17,1,0;12,20,1,11;12,21,1,6;12,22,1,11;12,23,1,8;12,24,1,11;13,0,1,7;13,1,1,11;13,2,1,7;13,3,2,5;13,5,1,3;13,8,2,6;13,10,1,7;13,11,3,9;13,14,1,11;13,15,1,9;13,16,1,5;13,17,1,1;13,20,1,3;13,21,1,4;13,22,1,6;13,23,1,8;13,24,1,11;13,25,1,6;14,0,1,11;14,1,1,6;14,2,3,4;14,8,1,2;14,9,1,7;14,10,1,6;14,11,2,9;14,13,1,8;14,14,1,12;14,15,1,10;14,16,1,7;14,17,1,5;14,20,1,6;14,21,1,5;14,22,1,4;14,23,1,5;14,24,1,6;14,25,1,11;15,1,1,5;15,2,2,2;15,8,1,3;15,9,2,9;15,11,1,7;15,12,2,8;15,14,1,10;15,15,2,7;15,17,1,1;15,22,2,2;15,24,1,5;16,8,1,4;16,9,1,1;16,10,1,5;16,11,4,6;16,15,3,3;17,8,1,4;17,9,2,3;17,11,2,2;17,13,1,3;17,14,1,4;17,15,1,2;17,16,2,3;18,8,1,4;18,9,1,3;18,10,1,1;18,11,3,0;18,14,1,2;18,15,1,1;18,16,2,3;19,8,1,4;19,9,1,2;19,10,1,1;19,11,4,0;19,15,1,1;19,16,2,3;20,9,1,2;20,10,1,3;20,11,3,0;20,14,1,2;20,15,1,1;20,16,1,2;21,9,1,3;21,10,6,2;22,9,1,2;22,10,1,1;22,11,1,0;22,12,1,1;22,13,2,0;22,15,1,1;22,16,1,0;23,9,1,3;23,10,1,2;23,11,4,1;23,15,1,3;23,16,1,1;24,9,1,6;24,10,7,5",
+	"18,26|FAE6BF,DED1C3,F9BD43,CEBB95,EF9F54,C69975,D16977,9C6B84,C14793,C735BA,C72CBC,B92AAF,AA2C9F,6A3688|0,3,1,6;0,4,3,11;0,11,3,11;0,14,1,6;1,2,2,2;1,4,1,9;1,5,1,11;1,6,1,10;1,7,1,11;1,8,2,12;1,10,1,11;1,11,2,10;1,13,1,9;1,14,2,2;2,1,1,13;2,2,1,4;2,3,1,2;2,4,1,4;2,5,1,12;2,6,1,10;2,7,4,11;2,11,1,10;2,12,1,12;2,13,3,4;2,16,1,13;3,1,1,4;3,2,3,2;3,5,1,6;3,6,1,12;3,7,4,8;3,11,1,12;3,12,1,6;3,13,3,2;3,16,1,4;4,0,1,4;4,1,3,2;4,4,1,6;4,5,2,8;4,7,1,4;4,8,2,3;4,10,1,4;4,11,2,8;4,13,1,7;4,14,3,2;4,17,1,4;5,0,1,4;5,1,2,2;5,3,1,7;5,4,1,8;5,5,1,4;5,6,6,1;5,12,1,4;5,13,1,8;5,14,1,7;5,15,2,2;5,17,1,4;6,1,1,2;6,2,2,8;6,4,1,4;6,5,1,5;6,6,6,0;6,12,1,5;6,13,1,4;6,14,1,6;6,15,1,8;6,16,1,2;7,2,1,11;7,3,1,6;7,4,1,1;7,5,1,0;7,6,1,3;7,7,4,0;7,11,1,5;7,12,1,0;7,13,1,1;7,14,1,4;7,15,1,11;8,2,1,8;8,3,1,4;8,4,1,1;8,5,1,3;8,6,2,1;8,8,2,3;8,10,2,1;8,12,1,3;8,13,1,0;8,14,1,4;8,15,1,8;9,1,1,12;9,2,1,6;9,3,1,3;9,4,1,1;9,5,1,3;9,6,2,7;9,8,1,8;9,9,1,11;9,10,1,3;9,11,1,13;9,12,1,3;9,13,1,1;9,14,1,3;9,15,1,6;9,16,1,12;10,0,1,12;10,1,1,11;10,2,1,6;10,3,1,3;10,4,2,1;10,6,2,7;10,8,2,11;10,10,2,7;10,12,3,1;10,15,1,6;10,16,1,11;10,17,1,12;11,1,1,11;11,2,1,8;11,3,1,4;11,4,2,1;11,6,2,3;11,8,2,11;11,10,1,8;11,11,2,0;11,13,1,1;11,14,1,4;11,15,1,6;11,16,1,11;12,1,1,12;12,2,1,11;12,3,1,6;12,4,1,3;12,5,1,1;12,6,1,3;12,7,1,6;12,8,1,9;12,9,1,13;12,10,1,1;12,11,1,0;12,12,2,3;12,14,1,6;12,15,1,11;12,16,1,12;13,1,1,12;13,2,1,11;13,3,1,8;13,4,4,5;13,8,2,12;13,10,2,0;13,12,1,5;13,13,1,7;13,14,1,8;13,15,1,10;13,16,1,12;14,2,1,12;14,3,1,9;14,4,1,13;14,5,2,5;14,7,1,7;14,8,2,13;14,10,1,0;14,11,1,2;14,12,1,7;14,13,1,13;14,14,1,9;14,15,1,12;15,3,1,11;15,4,1,13;15,5,1,7;15,6,1,3;15,7,1,7;15,8,1,12;15,9,1,1;15,10,1,5;15,11,1,7;15,12,2,13;15,14,1,12;16,3,1,9;16,4,2,13;16,6,3,7;16,9,1,5;16,10,1,7;16,11,3,13;16,14,1,9;16,15,1,11;17,3,1,12;17,4,1,6;17,5,8,13;17,13,1,7;17,14,1,11;18,4,1,4;18,5,1,11;18,6,1,12;18,7,4,13;18,11,1,12;18,12,1,11;18,13,1,6;19,4,1,4;19,5,1,11;19,6,1,9;19,7,1,12;19,8,1,4;19,9,1,2;19,10,1,8;19,11,2,9;19,13,1,6;20,4,1,4;20,5,2,9;20,7,1,12;20,10,1,8;20,11,2,9;20,13,1,6;21,4,1,6;21,5,1,9;21,6,1,10;21,7,1,12;21,10,1,12;21,11,1,9;21,12,1,10;21,13,1,8;22,3,1,2;22,4,1,8;22,5,3,12;22,10,4,12;22,14,1,4;23,3,1,4;23,4,1,11;23,5,2,10;23,7,1,11;23,11,3,10;23,14,1,6;24,4,4,10;24,11,4,10;25,5,1,12;25,6,2,11;25,11,1,11;25,12,2,12",
+	"26,13|EDD7D8,E9D5D5,E5D1D1,DFCBCB,DBC7C8,D9C4C5,D6C2C3,D2BEC0,CBB7B8,BFADAD,B8A6A7,AC9B9C,A09293,796E6E|0,23,1,0;1,0,1,2;1,23,1,8;1,24,1,4;2,1,1,7;2,8,1,7;2,9,1,4;2,10,1,5;2,11,1,4;2,12,1,3;2,13,1,4;2,14,1,6;2,15,1,7;2,22,1,2;2,23,1,3;2,24,1,4;3,1,1,4;3,2,1,7;3,7,1,5;3,8,6,0;3,14,1,1;3,15,1,4;3,16,1,6;3,22,2,8;3,24,1,7;4,2,1,3;4,3,1,4;4,7,1,6;4,8,1,2;4,9,1,1;4,10,1,2;4,11,1,1;4,12,1,0;4,13,1,2;4,14,1,1;4,15,1,5;4,16,1,7;4,21,1,2;4,22,1,5;4,23,1,7;4,24,1,2;5,2,1,5;5,3,1,3;5,4,1,0;5,7,1,1;5,8,1,10;5,9,1,12;5,10,2,1;5,12,1,9;5,13,1,11;5,14,1,7;5,15,1,1;5,16,1,5;5,20,1,0;5,21,1,6;5,22,1,5;5,23,1,9;5,24,1,4;6,4,1,5;6,5,1,6;6,6,1,2;6,7,1,3;6,8,1,13;6,9,1,10;6,10,1,11;6,11,1,1;6,12,1,13;6,13,1,11;6,14,1,12;6,15,1,1;6,16,1,6;6,17,1,5;6,18,1,0;6,19,1,7;6,20,1,2;6,21,1,3;6,22,1,8;7,5,1,5;7,6,1,4;7,7,1,7;7,8,1,13;7,9,1,12;7,10,1,13;7,11,1,5;7,12,1,13;7,13,1,12;7,14,1,13;7,15,1,5;7,16,1,9;7,17,1,7;7,18,1,2;7,19,1,7;7,20,1,6;8,6,1,7;8,7,1,10;8,8,1,11;8,9,1,12;8,10,1,10;8,11,1,11;8,12,1,12;8,13,1,13;8,14,1,11;8,15,1,8;8,16,1,10;8,17,1,8;8,18,1,5;8,19,1,7;8,20,1,5;9,7,2,10;9,9,1,9;9,10,1,11;9,11,1,13;9,12,1,9;9,13,3,10;9,16,1,12;10,8,1,12;10,9,1,9;10,10,2,8;10,12,1,9;10,13,1,10;10,14,2,12;11,8,1,12;11,9,1,9;11,10,1,3;11,11,2,2;11,13,1,6;11,14,1,12;12,10,4,12",
+	"16,26|FBF0EB,F9EAE6,F7E7E3,F6E2DE,F4DED9,EFDDD9,E8D6D1,C2B3B0,A09392,918384,776265,A03842,4B4348,2B2224|0,7,1,2;0,8,3,1;0,11,1,2;0,12,1,3;1,6,1,6;1,7,5,0;1,12,1,1;1,13,1,4;2,6,1,6;2,7,2,3;2,9,1,0;2,10,1,2;2,11,1,3;2,12,1,2;2,13,1,3;3,6,1,5;3,7,2,7;3,9,1,2;3,10,1,6;3,11,1,7;3,12,1,5;3,13,1,3;4,6,1,5;4,7,1,8;4,8,1,10;4,9,1,5;4,10,1,7;4,11,1,10;4,12,1,6;4,13,1,4;5,6,1,6;5,7,2,0;5,9,1,8;5,10,1,6;5,11,1,0;5,12,1,2;5,13,1,5;6,7,1,3;6,8,4,1;6,12,1,6;7,1,1,2;7,8,1,5;7,9,2,6;7,11,1,3;8,0,1,7;8,1,1,6;8,2,1,7;8,3,1,12;8,4,2,10;8,6,1,12;8,7,3,9;8,10,2,8;8,12,1,7;8,13,2,3;9,1,2,4;9,3,2,5;9,5,1,9;9,6,1,12;9,7,1,8;9,8,1,10;9,9,1,9;9,10,1,8;9,11,1,10;9,12,1,8;9,13,1,2;9,14,1,4;10,2,1,6;10,3,1,3;10,4,1,1;10,5,2,12;10,7,1,2;10,8,1,10;10,9,1,8;10,10,1,2;10,11,1,4;10,12,1,6;10,13,1,4;10,14,1,2;11,5,2,10;11,7,1,2;11,8,1,12;11,9,1,8;11,10,1,1;11,11,3,3;11,14,1,1;11,15,1,4;12,5,2,11;12,7,1,6;12,8,1,12;12,9,1,9;12,10,1,5;12,11,1,3;12,13,1,1;12,14,1,0;12,15,1,2;13,5,1,11;13,6,1,10;13,7,1,6;13,8,1,13;13,9,1,9;13,10,1,5;13,14,1,0;13,15,1,2;14,5,1,11;14,6,1,8;14,7,1,3;14,8,1,9;14,9,1,6;14,10,1,0;14,11,1,1;14,13,1,2;14,14,1,1;14,15,1,0;15,5,1,11;15,6,1,8;15,7,1,0;15,8,1,3;15,9,1,2;15,10,1,1;15,11,1,2;15,13,1,6;15,14,2,5;16,5,1,12;16,6,1,8;16,7,1,2;16,10,1,3;16,11,1,1;17,5,1,12;17,6,1,8;17,7,1,6;17,10,1,2;17,11,1,3;18,5,1,11;18,6,1,8;18,7,1,5;18,8,1,9;18,9,1,10;18,10,1,5;18,11,1,1;18,12,1,3;19,5,1,12;19,6,1,8;19,7,1,3;19,8,1,9;19,9,1,12;19,10,1,5;19,11,1,2;19,12,1,3;20,4,2,13;20,6,1,9;20,7,1,0;20,8,1,6;20,9,1,10;20,10,1,2;20,11,1,4;21,4,2,13;21,6,1,12;21,7,1,9;21,8,2,10;21,10,1,2;21,11,1,4;22,4,2,13;22,6,1,12;22,7,1,13;22,8,1,12;22,9,1,8;22,10,2,1;23,4,1,13;23,5,2,11;23,10,1,4;23,11,1,3;23,12,1,4;24,4,2,13;25,4,2,13",
+	"26,24|DFDDAA,C5D4AE,E5C36F,B7C3A1,C6AC75,98A686,9E8469,7A5B51,5C5242,423A37,322C30,2B2629,242124,1C1A1C|1,4,1,7;1,5,1,4;1,6,1,8;1,13,1,8;1,14,1,7;2,4,1,6;2,5,1,2;2,6,1,4;2,7,1,8;2,8,1,11;2,9,2,10;2,11,1,9;2,12,1,7;2,13,2,2;2,15,1,9;3,4,1,7;3,5,1,4;3,6,1,7;3,7,1,11;3,8,1,13;3,9,1,12;3,10,1,13;3,11,1,10;3,12,1,6;3,13,1,4;3,14,1,2;4,4,2,9;4,6,1,12;4,7,1,11;4,8,2,12;4,10,1,11;4,11,1,12;4,12,1,11;4,13,1,7;4,14,1,6;5,4,2,12;5,6,2,8;5,8,2,13;5,10,1,11;5,11,1,8;5,12,1,12;5,13,1,13;5,14,1,11;6,4,1,13;6,5,1,8;6,6,1,13;6,7,1,7;6,8,1,10;6,9,1,13;6,10,1,8;6,11,1,13;6,12,1,6;6,13,1,13;6,14,1,12;7,4,1,9;7,5,1,11;7,6,1,9;7,7,4,8;7,11,1,13;7,12,1,8;7,13,1,13;7,14,1,8;7,22,1,11;7,23,1,10;8,4,1,12;8,5,1,9;8,6,1,7;8,7,1,12;8,8,1,10;8,9,1,9;8,10,1,13;8,11,1,7;8,12,1,8;8,13,1,13;8,14,1,8;8,20,1,0;8,21,1,8;8,22,1,12;8,23,2,13;9,5,1,7;9,6,1,12;9,7,4,13;9,11,1,9;9,12,1,8;9,13,1,9;9,19,2,2;9,21,1,8;9,22,1,6;9,23,1,12;9,24,1,13;10,4,3,2;10,7,4,6;10,11,1,4;10,12,1,2;10,13,1,4;10,14,1,2;10,18,1,0;10,19,3,2;10,22,1,3;10,23,1,5;11,4,1,1;11,5,1,0;11,6,1,3;11,7,1,1;11,8,1,5;11,9,1,1;11,10,2,3;11,12,1,1;11,13,1,7;11,14,1,0;11,18,1,0;11,19,1,5;11,20,1,4;11,21,2,2;12,3,1,12;12,4,1,7;12,5,1,0;12,6,1,3;12,7,1,1;12,8,1,5;12,9,2,3;12,11,1,1;12,12,1,3;12,13,1,11;12,14,1,9;12,19,1,11;12,20,2,1;13,3,1,10;13,4,1,6;13,5,1,0;13,6,1,1;13,7,1,0;13,8,1,1;13,9,3,0;13,12,1,5;13,13,1,12;13,14,1,11;13,15,1,12;13,18,2,13;13,20,1,10;13,21,1,6;14,2,1,7;14,3,2,6;14,5,6,1;14,11,1,0;14,12,1,7;14,13,1,13;14,14,1,2;14,15,1,8;14,16,1,3;14,18,1,6;14,19,2,13;15,2,1,6;15,3,1,3;15,4,1,6;15,5,1,8;15,6,1,1;15,7,1,5;15,8,1,1;15,9,1,3;15,10,1,1;15,11,1,5;15,12,2,13;15,14,2,5;15,16,1,6;15,17,1,4;15,18,1,3;15,19,2,13;16,2,1,6;16,3,1,2;16,4,1,4;16,5,1,9;16,6,6,5;16,12,1,12;16,13,1,7;16,14,1,6;16,15,1,2;16,16,1,4;16,17,1,8;16,18,1,4;16,19,1,5;16,20,1,3;17,2,1,6;17,3,1,5;17,4,1,8;17,5,1,5;17,6,1,1;17,7,5,3;17,12,1,9;17,13,1,7;17,14,1,6;17,15,1,1;17,16,1,8;17,17,1,9;17,18,2,2;18,1,1,11;18,2,2,10;18,4,1,8;18,5,1,3;18,6,1,5;18,7,2,3;18,9,1,5;18,10,1,1;18,11,1,3;18,12,1,5;18,13,1,7;18,14,1,6;18,15,1,9;18,16,1,10;18,17,1,12;19,1,1,12;19,2,1,11;19,3,1,12;19,5,6,2;19,11,2,4;19,13,1,2;19,14,1,6;19,15,1,11;19,16,1,12;19,17,2,10;20,0,1,9;20,1,3,10;20,15,1,11;20,16,2,10;21,15,1,10;21,16,1,11;21,17,1,10",
+	"26,23|FCE8E1,F6E2DC,F8DFD5,F5D5AD,DFC5BF,E3BC83,C39D7A,B9716E,BA3E3E,7C6057,57383A,B42121,7C1E1F,371F21|0,7,2,2;0,9,3,4;0,12,1,2;0,13,3,4;0,16,1,2;1,6,2,2;1,8,1,9;1,9,1,13;1,10,1,10;1,11,1,9;1,12,1,6;1,13,1,13;1,14,1,9;1,15,1,10;1,16,1,4;1,17,1,2;2,6,1,3;2,7,1,2;2,8,1,9;2,9,1,2;2,10,1,0;2,11,2,4;2,13,1,2;2,14,1,1;2,15,1,4;2,16,1,6;2,17,1,2;3,6,1,3;3,7,1,2;3,8,1,6;3,9,1,9;3,10,1,7;3,11,1,4;3,12,1,1;3,13,1,6;3,14,1,9;3,15,1,7;3,16,1,4;3,17,1,3;4,4,1,10;4,5,1,8;4,6,1,3;4,7,1,2;4,8,1,13;4,9,2,12;4,11,1,10;4,12,1,7;4,13,3,12;4,16,1,7;4,17,1,3;4,18,1,8;4,19,1,9;5,2,4,8;5,6,1,4;5,7,1,7;5,8,1,11;5,9,1,13;5,10,2,12;5,12,1,7;5,13,1,11;5,14,1,13;5,15,1,11;5,16,1,8;5,17,1,6;5,18,3,8;5,21,1,13;6,2,1,10;6,3,2,8;6,5,1,11;6,6,1,4;6,7,1,10;6,8,1,12;6,9,2,11;6,11,1,7;6,12,1,4;6,13,3,11;6,16,1,10;6,17,1,6;6,18,2,8;6,20,1,13;7,3,1,10;7,4,2,8;7,6,1,4;7,7,1,0;7,8,1,4;7,9,1,7;7,10,1,6;7,11,1,2;7,12,1,0;7,13,1,4;7,14,1,7;7,15,1,6;7,16,1,1;7,17,1,4;7,18,1,8;7,19,1,10;8,4,1,10;8,5,1,13;8,6,1,4;8,7,1,0;8,8,2,1;8,10,5,0;8,15,1,2;8,16,1,0;8,17,1,4;8,18,1,12;9,4,2,13;9,6,1,4;9,7,1,0;9,8,1,1;9,9,1,4;9,10,4,2;9,14,1,4;9,15,1,1;9,16,1,0;9,17,1,4;9,18,1,13;9,20,3,5;9,23,1,6;9,24,1,5;10,4,2,13;10,6,1,4;10,7,1,0;10,8,2,1;10,10,1,0;10,11,3,1;10,14,3,0;10,17,1,4;10,18,1,13;10,19,1,6;10,20,1,5;10,21,1,6;10,22,2,13;10,24,1,9;10,25,1,5;11,3,2,13;11,5,1,9;11,6,1,4;11,7,3,0;11,10,3,4;11,13,1,6;11,14,3,0;11,17,1,4;11,18,1,13;11,19,2,6;11,21,1,13;11,22,1,7;11,23,1,10;11,24,1,13;11,25,1,7;12,2,1,9;12,3,1,6;12,4,1,9;12,5,1,10;12,6,1,9;12,7,1,2;12,8,1,1;12,9,2,0;12,11,2,2;12,13,1,1;12,14,2,0;12,16,1,1;12,17,1,5;12,18,1,13;12,19,1,6;12,20,1,7;12,21,1,13;12,22,1,5;12,23,1,7;12,24,1,13;12,25,1,6;13,2,1,4;13,3,1,6;13,4,3,10;13,7,1,4;13,8,1,2;13,9,2,0;13,11,1,1;13,12,2,0;13,14,2,1;13,16,1,2;13,17,1,5;13,18,1,13;13,19,2,6;13,21,3,13;13,24,1,10;13,25,1,5;14,1,1,4;14,2,2,7;14,4,2,10;14,6,1,9;14,7,2,2;14,9,2,0;14,11,2,1;14,13,1,0;14,14,1,1;14,15,2,2;14,17,1,7;14,18,1,10;14,19,1,0;14,20,1,5;14,21,1,6;14,22,1,10;14,23,1,9;14,24,1,5;15,0,1,6;15,1,1,4;15,2,1,7;15,3,3,6;15,6,1,9;15,7,7,7;15,14,3,9;15,17,2,12;15,19,1,6;15,20,1,4;15,21,3,5;16,0,1,10;16,1,1,4;16,2,1,1;16,3,1,9;16,4,1,10;16,5,2,12;16,7,2,13;16,9,5,12;16,14,2,13;16,16,3,12;16,19,1,13;16,20,1,4;16,21,1,1;17,3,1,13;17,4,1,12;17,5,2,11;17,7,3,12;17,12,1,13;17,13,1,10;17,14,4,12;17,18,1,11;17,19,1,10;18,3,1,13;18,4,1,12;18,5,1,10;18,6,3,11;18,9,1,10;18,12,1,13;18,13,1,10;18,14,1,6;18,15,1,4;18,16,1,6;18,18,2,12;18,20,1,13;19,3,1,13;19,6,3,6;19,9,1,10;19,12,1,7;19,13,1,9;19,14,1,11;19,15,1,8;19,16,2,11;19,20,1,13;20,5,1,8;20,6,3,7;20,9,1,8;20,12,1,2;20,13,1,4;20,14,1,6;20,15,1,8;20,16,2,7;21,5,1,8;21,6,1,11;21,7,1,8;21,8,1,11;21,9,1,5;22,5,1,4;22,6,1,6;22,7,1,4;22,8,1,7",
+	"21,26|F7903B,F37C36,BD9A3F,E87834,EC6D31,EA642D,D9652E,E55A2B,DF592C,DD5329,D94B2A,D14B2A,C83F26,6D3722|0,12,3,2;1,11,3,2;2,8,1,3;2,9,1,4;2,10,1,6;2,11,2,1;2,13,1,0;2,14,2,3;3,7,2,11;3,9,2,8;3,11,1,3;3,12,1,5;3,13,1,1;3,14,1,7;3,15,1,4;3,16,2,6;4,6,2,10;4,8,1,7;4,9,1,8;4,10,2,4;4,12,1,5;4,13,1,4;4,14,2,7;4,16,2,10;4,18,1,11;5,6,1,10;5,7,1,9;5,8,1,13;5,9,1,12;5,10,2,0;5,12,1,1;5,13,1,0;5,14,1,1;5,15,1,12;5,16,1,11;5,17,1,10;5,18,1,11;6,6,1,9;6,7,1,11;6,8,2,13;6,10,1,6;6,11,1,0;6,12,1,3;6,13,1,0;6,14,3,13;6,17,1,8;6,18,1,10;7,6,1,1;7,7,1,3;7,8,3,13;7,11,1,3;7,12,1,6;7,13,1,11;7,14,3,13;7,17,1,4;7,18,1,7;8,6,1,1;8,7,1,0;8,8,1,1;8,9,1,3;8,10,1,2;8,11,1,6;8,12,1,13;8,13,2,3;8,15,1,6;8,16,2,0;8,18,1,7;9,5,1,10;9,6,1,5;9,7,1,1;9,8,1,5;9,9,6,13;9,15,1,5;9,16,1,0;9,17,1,1;9,18,1,8;10,5,1,11;10,6,1,6;10,7,1,0;10,8,1,5;10,9,1,6;10,10,1,3;10,11,3,13;10,14,1,6;10,15,1,4;10,16,1,1;10,17,1,5;10,18,1,10;11,5,1,11;11,6,1,10;11,7,1,7;11,8,1,9;11,9,1,7;11,10,1,5;11,11,1,7;11,12,1,5;11,13,1,4;11,14,2,5;11,16,1,1;11,17,1,10;11,18,1,11;12,5,1,12;12,6,1,11;12,7,1,3;12,8,1,5;12,9,1,3;12,10,1,0;12,11,1,5;12,12,2,3;12,14,1,10;12,15,1,8;12,16,1,7;12,17,2,11;13,5,1,8;13,6,1,11;13,7,1,9;13,8,2,5;13,10,1,0;13,11,1,4;13,12,2,0;13,14,1,9;13,15,1,3;13,16,2,8;14,3,2,0;14,5,1,4;14,6,1,8;14,7,1,12;14,8,1,9;14,9,1,5;14,10,1,0;14,11,1,5;14,12,1,0;14,13,1,3;14,14,1,9;14,15,1,10;14,16,1,11;14,17,1,9;14,18,1,4;15,2,1,3;15,3,2,1;15,5,1,8;15,6,3,12;15,9,1,10;15,10,1,5;15,11,1,9;15,12,1,4;15,13,1,9;15,14,2,12;15,16,1,9;15,17,1,8;15,18,2,1;16,2,1,9;16,3,3,7;16,6,3,12;16,9,1,11;16,10,1,5;16,11,1,9;16,12,1,5;16,13,1,11;16,14,2,12;16,16,1,11;16,17,1,8;16,18,1,4;16,19,1,1;16,20,1,3;17,3,1,10;17,4,2,7;17,6,1,6;17,7,2,12;17,9,1,9;17,10,1,11;17,11,1,7;17,12,2,9;17,14,3,12;17,17,1,7;17,18,1,4;17,19,1,5;17,20,1,7;18,3,1,10;18,4,2,7;18,17,3,9;18,20,1,10;19,3,1,7;19,4,2,5;19,17,1,7;19,18,1,10;19,19,1,9;20,3,3,9;20,17,3,7;21,0,1,1;21,1,2,0;21,3,3,4;21,17,3,7;22,2,3,5;22,5,1,4;22,17,1,5;22,18,2,7;23,17,3,1;24,17,1,1;24,18,1,4;24,19,1,3;24,20,1,1;25,17,3,0",
+	"12,26|EED6D1,E9D1CE,E3CCCC,E4C9BA,E6C0AA,EAB289,D2B9B1,FCA13E,FA9736,E59B54,AE7C55,7D5843,3D251A,2F1F19|0,1,1,2;0,6,1,6;0,7,1,10;1,1,1,10;1,2,4,6;1,6,1,11;1,7,1,10;2,1,2,6;2,3,1,0;2,4,1,5;2,5,1,3;2,6,1,0;3,1,1,5;3,2,1,4;3,3,1,0;3,4,2,5;3,6,1,1;4,1,2,6;4,3,1,1;4,4,2,6;4,6,1,1;5,0,1,13;5,1,1,12;5,2,1,13;5,3,1,11;5,4,1,10;5,5,1,6;5,6,1,5;6,1,1,11;6,2,1,6;6,3,1,11;6,4,1,2;6,5,1,6;6,6,1,10;6,7,1,11;7,2,2,4;7,4,1,2;7,5,1,5;7,6,4,8;8,1,2,8;8,3,1,9;8,4,1,2;8,5,1,5;8,6,2,8;8,8,1,7;8,9,1,8;8,10,1,7;8,11,1,8;9,1,2,8;9,3,1,7;9,4,1,2;9,5,1,4;9,6,1,7;9,7,1,8;9,8,1,7;9,9,1,8;9,10,1,7;9,11,1,8;10,0,1,7;10,1,1,8;10,2,1,9;10,3,1,3;10,4,1,1;10,5,2,0;10,7,1,5;10,8,1,7;10,9,3,8;11,0,1,7;11,1,1,9;11,2,1,2;11,3,1,1;11,4,3,5;11,7,1,1;11,8,1,5;11,9,1,8;11,10,2,10;12,0,1,7;12,1,1,9;12,2,1,2;12,3,1,1;12,4,1,0;12,5,1,5;12,6,2,2;12,8,1,5;12,9,2,8;12,11,1,10;13,0,2,8;13,2,2,3;13,4,4,2;13,8,1,5;13,9,1,8;13,10,2,10;14,0,2,7;14,2,2,2;14,4,1,3;14,5,2,4;14,7,1,2;14,8,1,5;14,9,1,8;14,10,1,10;14,11,1,12;15,1,1,7;15,2,1,0;15,3,1,1;15,4,1,2;15,5,1,3;15,6,1,4;15,7,1,0;15,8,1,5;15,9,3,8;16,2,1,1;16,3,1,9;16,4,1,3;16,5,1,2;16,6,2,4;16,8,1,5;16,9,1,8;16,10,1,7;17,2,1,2;17,3,2,4;17,5,1,3;17,6,1,5;17,7,1,4;17,8,2,3;18,2,1,2;18,4,1,1;18,7,2,3;18,9,1,1;19,2,1,0;19,4,1,2;19,7,2,0;19,9,1,1;20,2,1,0;20,4,1,2;20,7,1,0;20,8,1,1;20,9,1,2;21,2,1,2;21,4,1,11;21,5,1,12;21,7,1,1;21,8,2,10;22,1,1,10;22,2,1,6;22,3,3,12;22,7,1,6;22,8,1,11;22,9,2,12;23,1,2,12;23,3,1,13;23,4,1,12;23,7,1,12;23,8,2,13;24,1,2,12;24,3,1,13;24,6,2,12;24,8,1,13;25,1,2,13;25,6,3,13",
+}
+local HUES = { Color3.fromRGB(160, 68, 176), Color3.fromRGB(185, 42, 175), Color3.fromRGB(217, 196, 197), Color3.fromRGB(160, 56, 66), Color3.fromRGB(229, 195, 111), Color3.fromRGB(124, 30, 31), Color3.fromRGB(229, 90, 43), Color3.fromRGB(250, 151, 54) }
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local IS_TOUCH = UserInputService.TouchEnabled
+local rnd = Random.new()
+
+local function new(class, props, parent)
+	local obj = Instance.new(class)
+	for k, v in pairs(props) do
+		obj[k] = v
+	end
+	obj.Parent = parent
+	return obj
+end
+
+local function getParent()
+	local ok, ui = pcall(function()
+		return (gethui and gethui()) or game:GetService("CoreGui")
+	end)
+	if ok and ui then
+		return ui
+	end
+	return Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local parent = getParent()
+pcall(function()
+	local old = parent:FindFirstChild(TITLE)
+	if old then
+		old:Destroy()
+	end
+end)
+
+local Gui = new("ScreenGui", {
+	Name = TITLE,
+	IgnoreGuiInset = true,
+	ResetOnSpawn = false,
+	DisplayOrder = 999,
+	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+}, parent)
+pcall(function()
+	Gui.ScreenInsets = Enum.ScreenInsets.None
+end)
+pcall(function()
+	if syn and syn.protect_gui then
+		syn.protect_gui(Gui)
+	end
+end)
+
+-- ========== BACKDROP ==========
+local Root = new("Frame", {
+	Size = UDim2.fromScale(1, 1),
+	BackgroundColor3 = Color3.new(0, 0, 0),
+	BorderSizePixel = 0,
+	Active = true, -- blocks taps/clicks behind it
+}, Gui)
+local Backdrop = new("Frame", {
+	Size = UDim2.fromScale(1, 1),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BorderSizePixel = 0,
+}, Root)
+new("UIGradient", {
+	Rotation = 90,
+	Color = ColorSequence.new(Color3.fromRGB(26, 8, 40), Color3.fromRGB(4, 2, 8)),
+}, Backdrop)
+
+local function circle(parentFrame, size, x, y, transp, color, scale)
+	local c = new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = scale and UDim2.fromScale(x, y) or UDim2.fromOffset(x, y),
+		Size = UDim2.fromOffset(size, size),
+		BackgroundColor3 = color,
+		BackgroundTransparency = transp,
+		BorderSizePixel = 0,
+	}, parentFrame)
+	new("UICorner", { CornerRadius = UDim.new(1, 0) }, c)
+	return c
+end
+circle(Root, 190, 0.82, 0.16, 0.93, ORANGE, true)
+circle(Root, 130, 0.82, 0.16, 0.88, ORANGE, true)
+circle(Root, 78, 0.82, 0.16, 0.7, ORANGE_LIGHT, true)
+
+local embers = {}
+for i = 1, (IS_TOUCH and 10 or 22) do
+	local size = rnd:NextInteger(2, 5)
+	embers[i] = {
+		frame = new("Frame", {
+			Size = UDim2.fromOffset(size, size),
+			BackgroundColor3 = (i % 3 == 0) and ORANGE_LIGHT or ORANGE,
+			BackgroundTransparency = rnd:NextNumber(0.3, 0.7),
+			BorderSizePixel = 0,
+		}, Root),
+		x = rnd:NextNumber(),
+		y = rnd:NextNumber(),
+		speed = rnd:NextNumber(0.03, 0.1),
+		phase = rnd:NextNumber(0, 6),
+	}
+end
+
+local bats = {}
+local function makeBat(y, speed, dir, startX)
+	local c = new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Size = UDim2.fromOffset(26, 12),
+		BackgroundTransparency = 1,
+	}, Root)
+	local col = Color3.fromRGB(12, 6, 20)
+	new("Frame", { Position = UDim2.fromOffset(11, 2), Size = UDim2.fromOffset(4, 8), BackgroundColor3 = col, BorderSizePixel = 0 }, c)
+	local wl = new("Frame", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.fromOffset(11, 6), Size = UDim2.fromOffset(12, 3), BackgroundColor3 = col, BorderSizePixel = 0 }, c)
+	local wr = new("Frame", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.fromOffset(15, 6), Size = UDim2.fromOffset(12, 3), BackgroundColor3 = col, BorderSizePixel = 0 }, c)
+	bats[#bats + 1] = { frame = c, wl = wl, wr = wr, x = startX, y = y, speed = speed, dir = dir, phase = rnd:NextNumber(0, 6) }
+end
+makeBat(0.14, 0.045, 1, 0.1)
+makeBat(0.3, 0.03, -1, 0.7)
+if not IS_TOUCH then
+	makeBat(0.08, 0.06, 1, 0.5)
+end
+
+-- ========== CARD ==========
+local Holder = new("Frame", {
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.58),
+	Size = UDim2.fromOffset(CARD_W, CARD_H),
+	BackgroundTransparency = 1,
+}, Root)
+
+local Fit = new("UIScale", {}, Holder)
+local function updateScale()
+	local vp = Root.AbsoluteSize
+	if vp.X < 2 or vp.Y < 2 then
+		local cam = workspace.CurrentCamera
+		vp = cam and cam.ViewportSize or Vector2.new(800, 600)
+	end
+	local margin = IS_TOUCH and 36 or 28
+	Fit.Scale = math.clamp(math.min(vp.X / (CARD_W + margin), vp.Y / (CARD_H + margin)) * 0.8, 0.4, 0.85) -- compact size
+end
+updateScale()
+Root:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateScale)
+task.delay(0.3, updateScale) -- some executors report the size a moment late
+
+local Card = new("Frame", {
+	Size = UDim2.fromScale(1, 1),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BorderSizePixel = 0,
+	ClipsDescendants = true,
+}, Holder)
+new("UICorner", { CornerRadius = UDim.new(0, 22) }, Card)
+local CardStroke = new("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 3 }, Card)
+local StrokeGrad = new("UIGradient", {
+	Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, ORANGE),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 224, 130)),
+		ColorSequenceKeypoint.new(1, ORANGE),
+	}),
+}, CardStroke)
+new("UIGradient", { Rotation = 90, Color = ColorSequence.new(TOP, BOTTOM) }, Card)
+
+local Glow = new("Frame", {
+	AnchorPoint = Vector2.new(0, 1),
+	Position = UDim2.fromScale(0, 1),
+	Size = UDim2.new(1, 0, 0, 100),
+	BackgroundColor3 = ORANGE,
+	BorderSizePixel = 0,
+}, Card)
+new("UIGradient", { Rotation = 90, Transparency = NumberSequence.new(1, 0.72) }, Glow)
+
+-- soft light sheen across the top of the card
+local Sheen = new("Frame", {
+	Size = UDim2.new(1, 0, 0, 80),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BorderSizePixel = 0,
+}, Card)
+new("UIGradient", { Rotation = 90, Transparency = NumberSequence.new(0.92, 1) }, Sheen)
+
+-- cobweb in the top-left corner
+local function webLine(x, y, len, rot)
+	new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset(x, y),
+		Size = UDim2.fromOffset(len, 1),
+		Rotation = rot,
+		BackgroundColor3 = Color3.fromRGB(200, 190, 230),
+		BackgroundTransparency = 0.65,
+		BorderSizePixel = 0,
+	}, Card)
+end
+for _, a in ipairs({ 10, 35, 60, 85 }) do
+	local r = math.rad(a)
+	webLine(math.cos(r) * 36, math.sin(r) * 36, 72, a)
+end
+for _, rad in ipairs({ 26, 48 }) do
+	for a = 5, 80, 15 do
+		local m = math.rad(a + 7.5)
+		webLine(math.cos(m) * rad, math.sin(m) * rad, rad * 0.27, a + 7.5 + 90)
+	end
+end
+
+local Ghost = new("Frame", {
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Size = UDim2.fromOffset(18, 22),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BackgroundTransparency = 0.84,
+	BorderSizePixel = 0,
+}, Card)
+new("UICorner", { CornerRadius = UDim.new(0.5, 0) }, Ghost)
+for _, ex in ipairs({ 4, 10 }) do
+	new("Frame", { Position = UDim2.fromOffset(ex, 7), Size = UDim2.fromOffset(3, 4), BackgroundColor3 = DARK, BackgroundTransparency = 0.4, BorderSizePixel = 0 }, Ghost)
+end
+
+-- ========== PICTURE RING ==========
+local CX, CY = CARD_W / 2, 92
+local Halo = circle(Card, 156, CX, CY, 0.9, ORANGE)
+local RingFrame = circle(Card, 132, CX, CY, 0, INNER)
+local RingStroke = new("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 4 }, RingFrame)
+local RingGrad = new("UIGradient", {
+	Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, ORANGE),
+		ColorSequenceKeypoint.new(0.5, PURPLE),
+		ColorSequenceKeypoint.new(1, ORANGE),
+	}),
+}, RingStroke)
+
+local Art = new("Frame", {
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromOffset(CX, CY),
+	Size = UDim2.fromOffset(96, 96),
+	BackgroundTransparency = 1,
+	ZIndex = 2,
+}, Card)
+local PicScale = new("UIScale", {}, Art)
+local slides = {}
+local SLIDE_COUNT = (#IMAGE_IDS > 0) and #IMAGE_IDS or #PICS
+
+local function buildSlide(i)
+	if slides[i] then
+		return slides[i]
+	end
+	local holder
+	if #IMAGE_IDS > 0 then
+		holder = new("ImageLabel", {
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			Image = IMAGE_IDS[i],
+			ScaleType = Enum.ScaleType.Fit,
+			Visible = false,
+		}, Art)
+	else
+		local dims, pal, runs = PICS[i]:match("^([^|]*)|([^|]*)|(.*)$")
+		local gw, gh = dims:match("(%d+),(%d+)")
+		gw, gh = tonumber(gw), tonumber(gh)
+		holder = new("Frame", {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(gw * CELL, gh * CELL),
+			BackgroundTransparency = 1,
+			Visible = false,
+		}, Art)
+		local colors = {}
+		for hex in pal:gmatch("[^,]+") do
+			colors[#colors + 1] = Color3.fromRGB(
+				tonumber(hex:sub(1, 2), 16),
+				tonumber(hex:sub(3, 4), 16),
+				tonumber(hex:sub(5, 6), 16)
+			)
+		end
+		for y, x, w, c in runs:gmatch("(%d+),(%d+),(%d+),(%d+)") do
+			new("Frame", {
+				Position = UDim2.fromOffset(tonumber(x) * CELL, tonumber(y) * CELL),
+				Size = UDim2.fromOffset(tonumber(w) * CELL + 1, CELL + 1),
+				BackgroundColor3 = colors[tonumber(c) + 1],
+				BorderSizePixel = 0,
+			}, holder)
+		end
+	end
+	slides[i] = holder
+	return holder
+end
+
+-- little lights orbiting the ring
+local orbs = {}
+for k = 1, 4 do
+	local o = new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Size = UDim2.fromOffset(5, 5),
+		BackgroundColor3 = (k % 2 == 0) and PURPLE or ORANGE_LIGHT,
+		BorderSizePixel = 0,
+		ZIndex = 3,
+	}, Card)
+	new("UICorner", { CornerRadius = UDim.new(1, 0) }, o)
+	orbs[k] = o
+end
+
+-- confetti
+local confetti = {}
+local palette = { ORANGE, PURPLE, YELLOW, GREEN }
+for i = 1, 36 do
+	local size = (i % 3 == 0) and 5 or 4
+	confetti[i] = {
+		alive = false,
+		frame = new("Frame", {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Size = UDim2.fromOffset(size, size),
+			BackgroundColor3 = palette[(i % #palette) + 1],
+			BorderSizePixel = 0,
+			Visible = false,
+			ZIndex = 6,
+		}, Card),
+	}
+end
+local function launch(p, x, y, vx, vy, life)
+	p.alive, p.t, p.x, p.y, p.vx, p.vy, p.max = true, 0, x, y, vx, vy, life
+	p.rot = rnd:NextNumber(0, 360)
+	p.frame.Visible = true
+end
+local function miniBurst()
+	local made = 0
+	for _, p in ipairs(confetti) do
+		if not p.alive then
+			local a = rnd:NextNumber(0, math.pi * 2)
+			local sp = rnd:NextNumber(55, 105)
+			launch(p, CX, CY, math.cos(a) * sp, math.sin(a) * sp, rnd:NextNumber(0.45, 0.8))
+			made = made + 1
+			if made >= 8 then
+				return
+			end
+		end
+	end
+end
+local function bigBurst()
+	for _, p in ipairs(confetti) do
+		local a = rnd:NextNumber(0, math.pi * 2)
+		local sp = rnd:NextNumber(70, 160)
+		launch(p, CX, CY, math.cos(a) * sp, math.sin(a) * sp, rnd:NextNumber(0.7, 1.2))
+	end
+end
+
+-- what happens every time the picture changes
+local currentSlide, haloFlash = 0, 0
+local function showSlide(i)
+	if slides[currentSlide] then
+		slides[currentSlide].Visible = false
+	end
+	currentSlide = i
+	buildSlide(i).Visible = true
+	PicScale.Scale = 0.55
+	TweenService:Create(PicScale, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	RingStroke.Thickness = 7
+	TweenService:Create(RingStroke, TweenInfo.new(0.3), { Thickness = 4 }):Play()
+	Halo.BackgroundColor3 = HUES[((i - 1) % #HUES) + 1]
+	haloFlash = 1
+	miniBurst()
+end
+showSlide(1)
+
+-- ========== TITLES, PERCENT, BAR ==========
+local Grave = new("TextLabel", {
+	Position = UDim2.fromOffset(0, 164),
+	Size = UDim2.new(1, 0, 0, 42),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.Creepster,
+	Text = "GRAVE HUNT",
+	TextColor3 = ORANGE_LIGHT,
+	TextSize = 38,
+}, Card)
+local GraveStroke = new("UIStroke", { Color = DARK, Thickness = 2 }, Grave)
+
+local Title = new("TextLabel", {
+	Position = UDim2.fromOffset(0, 206),
+	Size = UDim2.new(1, 0, 0, 28),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.FredokaOne,
+	Text = "AUTO PIECE GIVER",
+	TextColor3 = TEXT,
+	TextSize = 23,
+}, Card)
+local TitleStroke = new("UIStroke", { Color = DARK, Thickness = 2 }, Title)
+
+local PercentPlate = new("Frame", {
+	Position = UDim2.fromOffset(100, 240),
+	Size = UDim2.fromOffset(120, 42),
+	BackgroundColor3 = Color3.fromRGB(10, 6, 20),
+	BackgroundTransparency = 0.35,
+	BorderSizePixel = 0,
+}, Card)
+new("UICorner", { CornerRadius = UDim.new(0, 14) }, PercentPlate)
+new("UIStroke", { Color = ORANGE_DARK, Thickness = 1 }, PercentPlate)
+
+local Percent = new("TextLabel", {
+	Position = UDim2.fromOffset(0, 236),
+	Size = UDim2.new(1, 0, 0, 50),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.FredokaOne,
+	Text = "1%",
+	TextColor3 = ORANGE_LIGHT,
+	TextSize = 46,
+}, Card)
+local PercentStroke = new("UIStroke", { Color = DARK, Thickness = 2 }, Percent)
+
+local BAR_X, BAR_W = 24, CARD_W - 48
+local BarBack = new("Frame", {
+	Position = UDim2.fromOffset(BAR_X, 306),
+	Size = UDim2.fromOffset(BAR_W, 26),
+	BackgroundColor3 = Color3.fromRGB(16, 8, 26),
+	BorderSizePixel = 0,
+	ClipsDescendants = true,
+}, Card)
+new("UICorner", { CornerRadius = UDim.new(1, 0) }, BarBack)
+new("UIStroke", { Color = ORANGE_DARK, Thickness = 2 }, BarBack)
+
+local Fill = new("Frame", {
+	Size = UDim2.new(0.01, 0, 1, 0),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BorderSizePixel = 0,
+}, BarBack)
+new("UICorner", { CornerRadius = UDim.new(1, 0) }, Fill)
+local FillGrad = new("UIGradient", { Color = ColorSequence.new(ORANGE, ORANGE_LIGHT) }, Fill)
+
+local Shine = new("Frame", {
+	Size = UDim2.new(0, 40, 1, 0),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BackgroundTransparency = 0.75,
+	BorderSizePixel = 0,
+	ZIndex = 3,
+}, BarBack)
+new("Frame", {
+	Size = UDim2.new(1, 0, 0.42, 0),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BackgroundTransparency = 0.88,
+	BorderSizePixel = 0,
+	ZIndex = 4,
+}, BarBack)
+for i = 1, 19 do -- segmented look
+	local f = i / 20
+	new("Frame", {
+		Position = UDim2.new(f, 0, 0, 0),
+		Size = UDim2.new(0, 2, 1, 0),
+		BackgroundColor3 = DARK,
+		BackgroundTransparency = 0.45,
+		BorderSizePixel = 0,
+		ZIndex = 5,
+	}, BarBack)
+end
+
+local function pumpkin(x, y, parentFrame, w, h)
+	local p = new("Frame", {
+		Position = UDim2.fromOffset(x, y),
+		Size = UDim2.fromOffset(w, h),
+		BackgroundColor3 = ORANGE,
+		BorderSizePixel = 0,
+	}, parentFrame)
+	new("UICorner", { CornerRadius = UDim.new(0.45, 0) }, p)
+	new("UIStroke", { Color = ORANGE_DARK, Thickness = 1 }, p)
+	new("Frame", { Position = UDim2.fromOffset(w / 2 - 1, -3), Size = UDim2.fromOffset(3, 4), BackgroundColor3 = GREEN, BorderSizePixel = 0 }, p)
+	new("Frame", { Position = UDim2.fromOffset(w * 0.2, h * 0.3), Size = UDim2.fromOffset(3, 3), BackgroundColor3 = DARK, BorderSizePixel = 0 }, p)
+	new("Frame", { Position = UDim2.fromOffset(w * 0.62, h * 0.3), Size = UDim2.fromOffset(3, 3), BackgroundColor3 = DARK, BorderSizePixel = 0 }, p)
+	new("Frame", { Position = UDim2.fromOffset(w * 0.25, h * 0.68), Size = UDim2.fromOffset(w * 0.5, 2), BackgroundColor3 = DARK, BorderSizePixel = 0 }, p)
+	return p
+end
+local Rider = pumpkin(BAR_X, 290, Card, 16, 13) -- little pumpkin riding the tip of the bar
+
+local StatusChip = new("Frame", {
+	Position = UDim2.fromOffset(50, 338),
+	Size = UDim2.fromOffset(220, 24),
+	BackgroundColor3 = Color3.fromRGB(10, 6, 20),
+	BackgroundTransparency = 0.4,
+	BorderSizePixel = 0,
+}, Card)
+new("UICorner", { CornerRadius = UDim.new(1, 0) }, StatusChip)
+
+local Status = new("TextLabel", {
+	Position = UDim2.fromOffset(0, 338),
+	Size = UDim2.new(1, 0, 0, 24),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamBold,
+	Text = "Gathering pieces",
+	TextColor3 = MUTED,
+	TextSize = 15,
+}, Card)
+
+new("Frame", {
+	Position = UDim2.fromOffset(24, 372),
+	Size = UDim2.new(1, -48, 0, 1),
+	BackgroundColor3 = Color3.fromRGB(120, 110, 160),
+	BorderSizePixel = 0,
+}, Card)
+new("TextLabel", {
+	Position = UDim2.fromOffset(0, 376),
+	Size = UDim2.new(1, 0, 0, 24),
+	BackgroundTransparency = 1,
+	Font = Enum.Font.GothamBold,
+	Text = "STEAL A BRAINROT",
+	TextColor3 = MUTED,
+	TextSize = 11,
+}, Card)
+pumpkin(76, 382, Card, 14, 11)
+pumpkin(230, 382, Card, 14, 11)
+
+local Flash = new("Frame", {
+	Size = UDim2.fromScale(1, 1),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BackgroundTransparency = 1,
+	BorderSizePixel = 0,
+	ZIndex = 20,
+}, Card)
+
+-- black cover used for the fade in / fade out (works on every executor)
+local Cover = new("Frame", {
+	Size = UDim2.fromScale(1, 1),
+	BackgroundColor3 = Color3.new(0, 0, 0),
+	BorderSizePixel = 0,
+	ZIndex = 100,
+}, Root)
+
+-- ========== INTRO ==========
+TweenService:Create(Cover, TweenInfo.new(0.5), { BackgroundTransparency = 1 }):Play()
+TweenService:Create(
+	Holder,
+	TweenInfo.new(0.55, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+	{ Position = UDim2.fromScale(0.5, 0.5) }
+):Play()
+local function introText(label, stroke, delay)
+	label.TextTransparency = 1
+	stroke.Transparency = 1
+	task.delay(delay, function()
+		TweenService:Create(label, TweenInfo.new(0.4), { TextTransparency = 0 }):Play()
+		TweenService:Create(stroke, TweenInfo.new(0.4), { Transparency = 0 }):Play()
+	end)
+end
+introText(Grave, GraveStroke, 0.3)
+introText(Title, TitleStroke, 0.45)
+introText(Percent, PercentStroke, 0.6)
+
+-- ========== LOGIC ==========
+local messages = {
+	"Gathering pieces",
+	"Sorting the candy",
+	"Waking the skeletons",
+	"Carving pumpkins",
+	"Polishing the pieces",
+	"Feeding the bats",
+	"Lighting the candles",
+	"Scaring off the ghosts",
+	"Wrapping the gifts",
+	"Almost ready to give",
+}
+
+local elapsed, lastShown, lastStatus, finished = 0, -1, "", false
+local nextSwap = rnd:NextNumber(0.5, 1.5)
+local conn
+
+conn = RunService.Heartbeat:Connect(function(dt)
+	elapsed = elapsed + dt
+	local p = math.clamp(elapsed / TOTAL_TIME, 0, 1)
+
+	-- new picture after a random 0.5 - 1.5 seconds
+	if elapsed >= nextSwap then
+		nextSwap = elapsed + rnd:NextNumber(0.5, 1.5)
+		showSlide(currentSlide % SLIDE_COUNT + 1)
+	end
+	haloFlash = math.max(0, haloFlash - dt * 4)
+
+	local n = math.clamp(math.floor(1 + p * 98 + 0.5), 1, 99)
+	if n ~= lastShown then
+		lastShown = n
+		Percent.Text = n .. "%"
+	end
+	Fill.Size = UDim2.new(math.max(p, 0.01), 0, 1, 0)
+	Rider.Position = UDim2.fromOffset(BAR_X + math.clamp(p * BAR_W - 8, 0, BAR_W - 16), 290 + math.sin(elapsed * 5) * 1.5)
+
+	local idx = math.clamp(math.floor(elapsed / (TOTAL_TIME / #messages)) + 1, 1, #messages)
+	local st = messages[idx] .. string.rep(".", math.floor(elapsed * 2) % 4)
+	if st ~= lastStatus then
+		lastStatus = st
+		Status.Text = st
+	end
+
+	Shine.Position = UDim2.new(((elapsed * 0.5) % 1.3) - 0.15, 0, 0, 0)
+	StrokeGrad.Rotation = (elapsed * 70) % 360
+	RingGrad.Rotation = (elapsed * 120) % 360
+	Glow.BackgroundTransparency = 0.04 * math.sin(elapsed * 9) + 0.04 * math.sin(elapsed * 5.3)
+	Grave.TextColor3 = ORANGE_LIGHT:Lerp(ORANGE, (math.sin(elapsed * 2.2) + 1) / 2 * 0.55)
+	Halo.BackgroundTransparency = math.clamp(0.9 + math.sin(elapsed * 2) * 0.04 - haloFlash * 0.3, 0, 1)
+
+	for k, o in ipairs(orbs) do
+		local a = elapsed * 1.1 + (k - 1) * math.pi / 2
+		o.Position = UDim2.fromOffset(CX + math.cos(a) * 76, CY + math.sin(a) * 76 + math.sin(elapsed * 2) * 3)
+	end
+
+	-- the picture floats and tilts a little
+	Art.Rotation = math.sin(elapsed * 1.6) * 3
+	Art.Position = UDim2.fromOffset(CX, CY + math.sin(elapsed * 2) * 3)
+
+	for _, c in ipairs(confetti) do
+		if c.alive then
+			c.t = c.t + dt
+			c.vy = c.vy + 150 * dt
+			c.x = c.x + c.vx * dt
+			c.y = c.y + c.vy * dt
+			c.frame.Position = UDim2.fromOffset(c.x, c.y)
+			c.frame.Rotation = c.rot + c.t * 300
+			c.frame.BackgroundTransparency = math.clamp(c.t / c.max, 0, 1)
+			if c.t >= c.max then
+				c.alive = false
+				c.frame.Visible = false
+			end
+		end
+	end
+	Ghost.Position = UDim2.fromOffset(CARD_W / 2 + math.sin(elapsed * 0.45) * 120, 220 + math.sin(elapsed * 0.9) * 12)
+
+	for _, e in ipairs(embers) do
+		e.y = e.y - e.speed * dt
+		if e.y < -0.05 then
+			e.y = 1.05
+			e.x = rnd:NextNumber()
+		end
+		e.frame.Position = UDim2.fromScale(e.x + math.sin(elapsed * 0.8 + e.phase) * 0.012, e.y)
+	end
+	for _, b in ipairs(bats) do
+		b.x = b.x + b.speed * dt * b.dir
+		if b.x > 1.08 then
+			b.x = -0.08
+		elseif b.x < -0.08 then
+			b.x = 1.08
+		end
+		b.frame.Position = UDim2.fromScale(b.x, b.y + math.sin(elapsed * 1.5 + b.phase) * 0.012)
+		local flap = 10 + 28 * math.sin(elapsed * 14 + b.phase)
+		b.wl.Rotation = flap
+		b.wr.Rotation = -flap
+	end
+
+	if elapsed >= TOTAL_TIME and not finished then
+		finished = true
+		conn:Disconnect()
+		Percent.Text = "100%"
+		Fill.Size = UDim2.fromScale(1, 1)
+		FillGrad.Color = ColorSequence.new(Color3.fromRGB(70, 176, 40), GREEN)
+		Status.Text = "Ready to give pieces!"
+		Status.TextColor3 = GREEN
+		bigBurst()
+
+		Flash.BackgroundTransparency = 0.3
+		TweenService:Create(Flash, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
+
+		task.delay(0.8, function()
+			TweenService:Create(Cover, TweenInfo.new(0.6), { BackgroundTransparency = 0 }):Play()
+			task.wait(0.65)
+			Gui:Destroy()
+
+			-- ===== PUT YOUR MAIN SCRIPT BELOW THIS LINE =====
+
+		end)
+	end
+end)
